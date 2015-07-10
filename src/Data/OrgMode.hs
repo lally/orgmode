@@ -246,7 +246,7 @@ orgPropDrawer = do manyTill space (char ':') <?> "Property Drawer"
                    manyTill space newline
                    return $ ChildDrawer $ Drawer drawerName props []
 
-emptyTextLine = TextLine 0 "" NoLine
+emptyTextLine = TextLine 0 "" Nothing
 
 -- Any line that isn't a node.
 orgBodyLine :: Parsec String st NodeChild
@@ -255,7 +255,7 @@ orgBodyLine = do firstChar <- satisfy (\a -> (a /= '*') && (a /= '#'))
                    then do rest <- manyTill anyChar newline
                            let allText = (firstChar : rest)
                                indent = length $ takeWhile (== ' ') allText
-                           return $ ChildText $ TextLine indent allText NoLine
+                           return $ ChildText $ TextLine indent allText Nothing
                    else return $ ChildText emptyTextLine
 
 orgProperty :: Parsec String st OrgFileElement
@@ -349,7 +349,7 @@ classifyOrgLine = do
 parseLine :: Int -> String -> Either ParseError OrgLine
 parseLine lineno s = do
   let indent = length $ takeWhile (== ' ') s
-      line = TextLine indent s (Line lineno)
+      line = TextLine indent s (Just lineno)
     in runParser classifyOrgLine line "input" (s ++ "\n")
 
 

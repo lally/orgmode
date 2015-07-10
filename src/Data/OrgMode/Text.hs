@@ -1,7 +1,7 @@
 {-# LANGUAGE BangPatterns, GADTs, DeriveDataTypeable, StandaloneDeriving #-}
 
 module Data.OrgMode.Text (
-  LineNumber(..), toNumber, TextLine(..), isNumber, TextLineSource(..), normalizeInputText,
+  LineNumber(..), toNumber, TextLine(..), isNumber, TextLineSource(..), normalizeInputText, lineAdd,
   linesStartingFrom, hasNumber, makeDrawerLines, wrapLine, prefixLine, tlPrint, tlFormat, wrapStringVarLines
   ) where
 
@@ -20,52 +20,52 @@ import System.IO
 
 type LineNumber = Maybe Int
 
-instance Monoid LineNumber where
-  mempty = NoLine
-  mappend NoLine _ = NoLine
-  mappend _ NoLine = NoLine
-  mappend (Line a) (Line b) = Line (a+b)
+lineAdd Nothing _ = Nothing
+lineAdd _ Nothing = Nothing
+lineAdd (Just a) (Just b) = Just (a+b)
 
 toNumber :: Int -> LineNumber -> Int
-toNumber n NoLine = n
-toNumber _ (Line a) = a
+toNumber n Nothing = n
+toNumber _ (Just a) = a
 
 -- I don't know why I'd need this.
 -- TODO: Remove and then remove dependencies.
+{-
 instance Num LineNumber where
   (+) a b = mconcat [a, b]
-  (*) NoLine a = a
-  (*) a NoLine = a
+  (*) Nothing a = a
+  (*) a Nothing = a
   (*) (Line a) (Line b) = Line $ a * b
-  (-) a NoLine = a
-  (-) NoLine b = NoLine
+  (-) a Nothing = a
+  (-) Nothing b = Nothing
   (-) (Line a) (Line b) = Line $ a - b
-  negate NoLine = NoLine
+  negate Nothing = Nothing
   negate (Line l) = Line (-l)
-  abs NoLine = NoLine
+  abs Nothing = Nothing
   abs (Line l) = Line $ abs l
-  signum NoLine = NoLine
+  signum Nothing = Nothing
   signum (Line l) 
     | l < 0 = Line (-1)
     | l > 0 = Line 1
     | otherwise = Line 0
   fromInteger i = Line $ fromIntegral i
-
+-}
 -- This is almost certainly wrong. 
 -- TODO: Remove and then remove dependencies.
-instance Ord LineNumber where
-  compare NoLine NoLine = EQ
-  compare NoLine (Line _) = LT
-  compare (Line _) NoLine = GT
-  compare (Line a) (Line b) = compare a b
-
+{-
+instance Ord (Maybe a) where
+  compare Nothing Nothing = EQ
+  compare Nothing (Just _) = LT
+  compare (Just _) Nothing = GT
+  compare (Just a) (Just b) = compare a b
+-}
 isNumber :: LineNumber -> Bool
-isNumber NoLine = False
-isNumber (Line _) = True
+isNumber Nothing = False
+isNumber (Just _) = True
 
 linesStartingFrom :: LineNumber -> [LineNumber]
-linesStartingFrom NoLine = repeat NoLine
-linesStartingFrom (Line l) = map Line [l..]
+linesStartingFrom Nothing = repeat Nothing
+linesStartingFrom (Just l) = map Just [l..]
 
 -- | Raw data about each line of text.  Currently a bit hacked, with
 -- 'tlLineNum == 0' indicating a fake line.
@@ -77,7 +77,7 @@ data TextLine = TextLine
                 } deriving (Eq, Typeable)
 
 hasNumber :: TextLine -> Bool
-hasNumber (TextLine _ _ (Line _)) = True
+hasNumber (TextLine _ _ (Just _)) = True
 hasNumber _ = False
 formatLine tl =
   (printf "[%3d] " (tlIndent tl)) ++
@@ -173,9 +173,9 @@ makeDrawerLines fstLine depth name props =
       mAdd  (Just x) y = Just (x + y)
       mAdd Nothing y = Nothing
       lastline =
-        TextLine depth (indent ++ ":END:") (mappend fstLine $ Line (length props + 1))
+        TextLine depth (indent ++ ":END:") (lineAdd fstLine $ Just (length props + 1))
       makePropLine ((prop, value), nr) =
-        TextLine depth (indent ++ ":" ++ prop ++ ": " ++ value) (mappend fstLine $ Line nr)
+        TextLine depth (indent ++ ":" ++ prop ++ ": " ++ value) (lineAdd fstLine $ Just nr)
       proplines = map makePropLine $ zip props [1..]
   in (headline:(proplines)) ++ [lastline]
 

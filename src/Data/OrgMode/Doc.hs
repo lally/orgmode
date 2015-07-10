@@ -80,7 +80,7 @@ instance TextLineSource Node where
 
 instance TextLineSource OrgFileProperty where
   getTextLines prop =
-    [TextLine 0 ("#+" ++ (fpName prop) ++ ": " ++ (fpValue prop)) NoLine]
+    [TextLine 0 ("#+" ++ (fpName prop) ++ ": " ++ (fpValue prop)) Nothing]
 
 -- ** Utilities
 trim xs =
