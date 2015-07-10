@@ -14,10 +14,6 @@ import Text.Printf
 import System.IO
 
 -- | Line numbers, where we can have an unattached root.
---data LineNumber = NoLine
---                | Line Int
---                deriving (Eq, Show)
-
 type LineNumber = Maybe Int
 
 lineAdd Nothing _ = Nothing
@@ -28,37 +24,6 @@ toNumber :: Int -> LineNumber -> Int
 toNumber n Nothing = n
 toNumber _ (Just a) = a
 
--- I don't know why I'd need this.
--- TODO: Remove and then remove dependencies.
-{-
-instance Num LineNumber where
-  (+) a b = mconcat [a, b]
-  (*) Nothing a = a
-  (*) a Nothing = a
-  (*) (Line a) (Line b) = Line $ a * b
-  (-) a Nothing = a
-  (-) Nothing b = Nothing
-  (-) (Line a) (Line b) = Line $ a - b
-  negate Nothing = Nothing
-  negate (Line l) = Line (-l)
-  abs Nothing = Nothing
-  abs (Line l) = Line $ abs l
-  signum Nothing = Nothing
-  signum (Line l) 
-    | l < 0 = Line (-1)
-    | l > 0 = Line 1
-    | otherwise = Line 0
-  fromInteger i = Line $ fromIntegral i
--}
--- This is almost certainly wrong. 
--- TODO: Remove and then remove dependencies.
-{-
-instance Ord (Maybe a) where
-  compare Nothing Nothing = EQ
-  compare Nothing (Just _) = LT
-  compare (Just _) Nothing = GT
-  compare (Just a) (Just b) = compare a b
--}
 isNumber :: LineNumber -> Bool
 isNumber Nothing = False
 isNumber (Just _) = True
@@ -135,22 +100,6 @@ wrapStringVarLines lens str
 
 wrapString :: Int -> String -> String
 wrapString len str = wrapStringVarLines (repeat len) str
-{-
-wrapString _ [] = []
-wrapString len str
-  | length str < len = str
-  | otherwise =
-    let first_word = takeWhile (not . isSpace) str
-        is_first_too_long = length first_word >= len
-        max_width = reverse $ take len str
-        wrapped_back = if is_first_too_long
-                       then first_word
-                       else reverse $ dropWhile (not . isSpace) max_width
-        remain = drop (length wrapped_back) str
-    in if length wrapped_back > 0 || length remain > 0
-       then wrapped_back ++ "\n" ++ wrapString len remain
-       else ""
--}
 wrapLine :: Int -> TextLine -> [TextLine]
 wrapLine width (TextLine indent string linenum) =
   let desired_len = width - indent
