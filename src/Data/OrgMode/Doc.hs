@@ -6,68 +6,62 @@ import Data.OrgMode.Text
 -- * Data Decls
 --
 
+-- |A keyword at the front of a ndoe heading, like TODO or DONE.
 data Prefix = Prefix String deriving (Eq, Show)
 
 data Drawer = Drawer
-              { drName :: String
-              , drProperties :: [(String, String)]
-              , drLines :: [TextLine]
+              { drName :: String -- ^ :PROPERTIES: or another name.
+              , drProperties :: [(String, String)] -- ^ Key-value pairs.
+              , drLines :: [TextLine] -- ^ Literal text of the entire drawer.
               } deriving (Eq, Show)
 
 -- |Just store the lines of the babel environment.
 data Babel = Babel [TextLine] deriving (Eq, Show)
+
+-- |Just store the lines of the table.
 data Table = Table [TextLine] deriving (Eq, Show)
 
--- |The body of a node has different parts.  We can put tables here,
--- as well as Babel sections, later.
-data NodeChild = ChildText TextLine
+-- |Children of top-level Org Nodes.
+data NodeChild = ChildText TextLine -- ^ Regular text.
                | ChildDrawer Drawer
-               | ChildNode Node
+               | ChildNode Node -- ^ outline nodes of higher depth.
                | ChildBabel Babel
                | ChildTable Table
                  deriving (Eq, Show)
 
+-- |An outline node in org-mode.  For a node @** TODO Foo a bar :FOOBAR:@
+--
+--  * @nDepth@ is 2
+--  * @nPrefix@ is @Just "TODO"@
+--  * @nTags@ is @["FOOBAR"]@
+--  * @nTopic@ is @"Foo a bar"@, note the stripped whitespace on the front and back.
+--  * @nChildren@ aren't determined by this line, but by the lines after.
 data Node = Node
-            { nDepth :: Int
-            , nPrefix :: Maybe Prefix
-            , nTags :: [String]
-            , nChildren :: [NodeChild]
-              -- ^ In reverse order during construction.
-            , nTopic :: String
-            , nLine :: TextLine
+            { nDepth :: Int -- ^ Number of stars on the left.
+            , nPrefix :: Maybe Prefix -- ^ E.g., TODO or DONE.
+            , nTags :: [String] -- ^:TAGS:AT:END:
+            , nChildren :: [NodeChild] -- ^ Everything hierarchially under the node.
+            , nTopic :: String -- ^ Text of he header line, minus prefix and tags.
+            , nLine :: TextLine -- ^ Literal text of the node header.
             } deriving (Eq, Show)
 
-data OrgFileProperty = OrgFileProperty { fpName :: String
-                                       , fpValue :: String
-                                       } deriving (Eq, Show)
+{-
+-- |A fully parsed OrgMode file.  @orgTitle@ is the property @TITLE@, duplicated from @orgProps@.
 data OrgFile = OrgFile { orgTitle :: String
                        , orgProps :: [(String, String)]
                        , orgNodes :: [Node]
                        } deriving (Eq, Show)
+-}
 
-data OrgFileElement = OrgTopProperty OrgFileProperty
-                    | OrgTopLevel { tlNode :: Node }
-                    deriving (Eq, Show)
-
--- | We have one of these per input line of the file.  Some of these
--- we just keep as the input text, in the TextLine (as they need
--- multi-line parsing to understand).
-data OrgLine = OrgText TextLine
-             | OrgHeader TextLine Node
-             | OrgDrawer TextLine
-             | OrgPragma TextLine OrgFileProperty
-             | OrgBabel TextLine
-             | OrgTable TextLine
-             deriving (Eq, Show)
-
--- ^ Backwards!
-data OrgElement = OrgElNode Node
-                | OrgElPragma OrgFileProperty
-                deriving (Eq, Show)
-
+-- |Properties within the org file.  Examples include @#+TITLE:@
+data OrgFileProperty = OrgFileProperty { fpName :: String
+                                       , fpValue :: String
+                                       } deriving (Eq, Show)
+-- |Full contents of an org file.
 data OrgDoc = OrgDoc
               { odNodes :: [Node]
               , odProperties :: [OrgFileProperty]
+              , odLines :: [TextLine]
               } deriving (Eq, Show)
 --
 -- * Instance Decls
@@ -87,14 +81,6 @@ instance TextLineSource Node where
 instance TextLineSource OrgFileProperty where
   getTextLines prop =
     [TextLine 0 ("#+" ++ (fpName prop) ++ ": " ++ (fpValue prop)) NoLine]
-
-instance TextLineSource OrgLine where
-  getTextLines (OrgText t) = [t]
-  getTextLines (OrgHeader t _) = [t]
-  getTextLines (OrgDrawer t) = [t]
-  getTextLines (OrgPragma t _) = [t]
-  getTextLines (OrgBabel t) = [t]
-  getTextLines (OrgTable t) = [t]
 
 -- ** Utilities
 trim xs =

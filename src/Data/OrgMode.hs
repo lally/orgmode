@@ -1,7 +1,19 @@
 {-# LANGUAGE BangPatterns #-}
+{-|
+Module      : Data.OrgMode
+Description : Parser and Serializer for Emacs OrgMode
+Copyright   : (c) Lally Singh, 2015
+License     : BSD3
+Maintainer  : yell@lal.ly
+Stability   : experimental
+Portability : BangPatterns, GADTs, DeriveDataTypeable, StandaloneDeriving
+
+A package to parse and interpret Emacs Org-Mode documents.  It also supports 
+-}
+
 module Data.OrgMode (
   Prefix(..), Drawer(..), Babel(..), Table(..), NodeChild(..), Node(..),
-  OrgFile(..), OrgFileProperty(..), OrgFileElement(..),
+  OrgFileProperty(..), OrgFileElement(..),
   OrgDocView(..), NodeUpdate(..), OrgDoc(..), TextLine(..), LineNumber(..),
   TextLineSource(..),
   toNumber, isNumber, linesStartingFrom, hasNumber, makeDrawerLines,
@@ -171,6 +183,31 @@ categorizeLines text =
 
 emptyZip = OrgDocZipper [] [] []
 
+-- | We have one of these per input line of the file.  Some of these
+-- we just keep as the input text, in the TextLine (as they need
+-- multi-line parsing to understand).
+data OrgLine = OrgText TextLine
+             | OrgHeader TextLine Node
+             | OrgDrawer TextLine
+             | OrgPragma TextLine OrgFileProperty
+             | OrgBabel TextLine
+             | OrgTable TextLine
+             deriving (Eq, Show)
+
+instance TextLineSource OrgLine where
+  getTextLines (OrgText t) = [t]
+  getTextLines (OrgHeader t _) = [t]
+  getTextLines (OrgDrawer t) = [t]
+  getTextLines (OrgPragma t _) = [t]
+  getTextLines (OrgBabel t) = [t]
+  getTextLines (OrgTable t) = [t]
+
+
+data OrgFileElement = OrgTopProperty OrgFileProperty
+                    | OrgTopLevel { tlNode :: Node }
+                    deriving (Eq, Show)
+
+
 -- | Parsing the file efficiently.  Let's keep it non-quadratic.
 --   - Split it up into lines
 --   - Identify each line, as part of one of the big structure types:
@@ -184,10 +221,10 @@ emptyZip = OrgDocZipper [] [] []
 --     tree.
 orgFile :: String -> OrgDoc
 orgFile fileContents =
-  let (OrgDocZipper path nodes props) =
-        foldl addOrgLine emptyZip (categorizeLines fileContents)
-      all_nodes = nodes ++ (snd $ appendChildrenUpPathThroughDepth (-1) path)
-  in OrgDoc all_nodes props
+  let lines = categorizeLines fileContents
+      (OrgDocZipper path nodes props) = foldl addOrgLine emptyZip lines
+      allNodes = nodes ++ (snd $ appendChildrenUpPathThroughDepth (-1) path)
+  in OrgDoc allNodes props (concatMap getTextLines lines)
 
 rstrip xs = reverse $ lstrip $ reverse xs
 lstrip = dropWhile (== ' ')

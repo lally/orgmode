@@ -14,9 +14,11 @@ import Text.Printf
 import System.IO
 
 -- | Line numbers, where we can have an unattached root.
-data LineNumber = NoLine
-                | Line Int
-                deriving (Eq, Show)
+--data LineNumber = NoLine
+--                | Line Int
+--                deriving (Eq, Show)
+
+type LineNumber = Maybe Int
 
 instance Monoid LineNumber where
   mempty = NoLine
