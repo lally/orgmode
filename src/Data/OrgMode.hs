@@ -8,7 +8,10 @@ Maintainer  : yell@lal.ly
 Stability   : experimental
 Portability : BangPatterns, GADTs, DeriveDataTypeable, StandaloneDeriving
 
-A package to parse and interpret Emacs Org-Mode documents.  It also supports 
+A package to parse and interpret Emacs Org-Mode documents.  It also supports
+arbitrary types that map back and forth with 'Node'.  Create an instance of
+@NodeUpdate a@ and use @OrgDocView a@ to read/write values of @a@ in an
+org-mode file.  Property drawers are great for this mapping.
 -}
 
 module Data.OrgMode (
@@ -16,8 +19,9 @@ module Data.OrgMode (
   OrgFileProperty(..), OrgFileElement(..),
   OrgDocView(..), NodeUpdate(..), OrgDoc(..), TextLine(..), LineNumber(..),
   TextLineSource(..),
-  toNumber, isNumber, linesStartingFrom, hasNumber, makeDrawerLines,
-  orgFile, generateDocView, getRawElements, updateNode, makeNodeLine, parseLine,
+--  toNumber, isNumber, linesStartingFrom, hasNumber, makeDrawerLines,
+--  makeNodeLine, parseLine,
+  orgFile, generateDocView, getRawElements, updateNode, 
   addOrgLine, emptyZip, categorizeLines
   ) where
 -- TODO(lally): only export the interesting things!
@@ -38,6 +42,16 @@ import Text.Regex.Posix
 import Text.StringTemplate
 
 -- ** Zipper Facilities
+-- | The document is a forest of Nodes, with properties.  The Node
+-- Path is the currently-constructing tree of nodes.  The path is
+-- sorted by 'nDepth', in descending order, with each element's parent
+-- after it in the list.
+data OrgDocZipper = OrgDocZipper
+                     { ozNodePath :: [Node]
+                     , ozNodes :: [Node]
+                     , ozProperties :: [OrgFileProperty]
+                     } deriving (Eq, Show)
+
 
 printChild (ChildNode n) = Just $ nTopic n
 printChild _ = Nothing
@@ -209,15 +223,18 @@ data OrgFileElement = OrgTopProperty OrgFileProperty
 
 
 -- | Parsing the file efficiently.  Let's keep it non-quadratic.
---   - Split it up into lines
---   - Identify each line, as part of one of the big structure types:
---      - node headers
---      - drawers
---      - file-level properties
---         - babel headers
---      - Lines who's type depend on context (e.g., babel entries or node
---        text)
---   - Then fold the lines over a builder function and a zipper of the
+--
+--   * Split it up into lines
+--   * Identify each line, as part of one of the big structure types:
+--
+--         * Node headers
+--         * Drawers
+--         * File-level properties
+--              * Babel headers
+--         * Lines who's type depend on context (e.g., babel entries or node
+--           text)
+--
+--   * Then fold the lines over a builder function and a zipper of the
 --     tree.
 orgFile :: String -> OrgDoc
 orgFile fileContents =

@@ -6,6 +6,7 @@ import Control.Exception (assert)
 import Control.Monad (liftM)
 import Data.OrgMode
 import Data.OrgMode.Text
+import Data.OrgMode.Doc
 import Data.Char (isSpace, isPrint, chr, toUpper)
 import Data.Foldable (foldlM)
 import Data.List (sort)

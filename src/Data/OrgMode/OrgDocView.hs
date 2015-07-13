@@ -1,5 +1,5 @@
 module Data.OrgMode.OrgDocView (
-  OrgDocZipper(..), OrgDocView(..), generateDocView, getRawElements,
+  OrgDocView(..), generateDocView, getRawElements,
   updateDoc, NodeUpdate(..)
   ) where
 
@@ -8,16 +8,6 @@ import Data.OrgMode.Text
 
 import Data.Set (Set(..), member, lookupLE)
 import Data.Maybe (mapMaybe, fromJust, catMaybes)
-
--- | The document is a forest of Nodes, with properties.  The Node
--- Path is the currently-constructing tree of nodes.  The path is
--- sorted by 'nDepth', in descending order, with each element's parent
--- after it in the list.
-data OrgDocZipper = OrgDocZipper
-                     { ozNodePath :: [Node]
-                     , ozNodes :: [Node]
-                     , ozProperties :: [OrgFileProperty]
-                     } deriving (Eq, Show)
 
 data OrgDocView a = OrgDocView
                     { ovElements :: [(a, Node)]

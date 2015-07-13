@@ -1,4 +1,7 @@
-module Data.OrgMode.Doc where
+module Data.OrgMode.Doc (Node(..), Prefix(..), Drawer(..),
+                         OrgFileProperty(..), Babel(..), Table(..),
+                         OrgDoc(..), NodeChild(..), updateNode, trim,
+                         makeNodeLine) where
 import Data.List (intercalate)
 import Data.OrgMode.Text
 
@@ -6,7 +9,7 @@ import Data.OrgMode.Text
 -- * Data Decls
 --
 
--- |A keyword at the front of a ndoe heading, like TODO or DONE.
+-- |A keyword at the front of a node heading, like TODO or DONE.
 data Prefix = Prefix String deriving (Eq, Show)
 
 data Drawer = Drawer
@@ -15,10 +18,10 @@ data Drawer = Drawer
               , drLines :: [TextLine] -- ^ Literal text of the entire drawer.
               } deriving (Eq, Show)
 
--- |Just store the lines of the babel environment.
+-- |Currently underimplemented: stores the lines of the babel environment.
 data Babel = Babel [TextLine] deriving (Eq, Show)
 
--- |Just store the lines of the table.
+-- |Currently underimplemented: stores the lines of the table.
 data Table = Table [TextLine] deriving (Eq, Show)
 
 -- |Children of top-level Org Nodes.
@@ -44,14 +47,6 @@ data Node = Node
             , nTopic :: String -- ^ Text of he header line, minus prefix and tags.
             , nLine :: TextLine -- ^ Literal text of the node header.
             } deriving (Eq, Show)
-
-{-
--- |A fully parsed OrgMode file.  @orgTitle@ is the property @TITLE@, duplicated from @orgProps@.
-data OrgFile = OrgFile { orgTitle :: String
-                       , orgProps :: [(String, String)]
-                       , orgNodes :: [Node]
-                       } deriving (Eq, Show)
--}
 
 -- |Properties within the org file.  Examples include @#+TITLE:@
 data OrgFileProperty = OrgFileProperty { fpName :: String

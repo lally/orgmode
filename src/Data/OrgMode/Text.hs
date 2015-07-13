@@ -32,11 +32,11 @@ linesStartingFrom :: LineNumber -> [LineNumber]
 linesStartingFrom Nothing = repeat Nothing
 linesStartingFrom (Just l) = map Just [l..]
 
--- | Raw data about each line of text.  Currently a bit hacked, with
--- 'tlLineNum == 0' indicating a fake line.
+-- | Raw data about each line of text.  Lines with 'tlLineNum == None'
+-- are generated and don't exist within the Org file (yet).
 data TextLine = TextLine
                 { tlIndent :: Int
-                  -- ^how long of a whitespace prefix is in tlText?
+                  -- ^how long of a whitespace (or asterisk, for 'Node') prefix is in tlText?
                 , tlText :: String
                 , tlLineNum :: LineNumber
                 } deriving (Eq, Typeable)
@@ -54,9 +54,8 @@ instance Show TextLine where
 instance Ord TextLine where
   compare a b = compare (tlLineNum a) (tlLineNum b)
 
--- | Currently a simple getter.  TODO(lally): extend with enough here
--- to let us write out a modified .org file, preserving as much of the
--- original input document structure as we can.
+-- | Implements an API for getting text lines.  Useful for Org file
+-- generation or mutation.
 class TextLineSource s where
   getTextLines :: s -> [TextLine]
 

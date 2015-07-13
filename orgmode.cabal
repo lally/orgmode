@@ -4,7 +4,7 @@
 name:                orgmode
 version:             0.1.0.0
 synopsis:            Org Mode library for haskell
--- description:         
+description:         A library to read and write emacs org-mode documents.
 license:             BSD3
 license-file:        LICENSE
 author:              Lally Singh
@@ -18,7 +18,6 @@ cabal-version:       >=1.10
 flag network-uri
    description: Get Network.URI from the network-uri package
    default: True
-
 
 library
   exposed-modules:     Data.OrgMode, Data.OrgMode.Text, Data.OrgMode.Doc, Data.OrgMode.OrgDocView
