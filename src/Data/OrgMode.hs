@@ -277,7 +277,7 @@ orgBodyLine = do firstChar <- satisfy (\a -> (a /= '*') && (a /= '#'))
 
 orgProperty :: Parsec String st OrgFileElement
 orgProperty = do string "#+"
-                 name <- many1 letter
+                 name <- many1 (letter <|> char '_')
                  char ':'
                  many space
                  value <- manyTill anyChar (try newline)

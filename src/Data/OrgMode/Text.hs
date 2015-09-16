@@ -1,8 +1,9 @@
 {-# LANGUAGE BangPatterns, GADTs, DeriveDataTypeable, StandaloneDeriving #-}
 
 module Data.OrgMode.Text (
-  LineNumber(..), toNumber, TextLine(..), isNumber, TextLineSource(..), normalizeInputText, lineAdd,
-  linesStartingFrom, hasNumber, makeDrawerLines, wrapLine, prefixLine, tlPrint, tlFormat, wrapStringVarLines
+  LineNumber(..), toNumber, TextLine(..), isNumber, TextLineSource(..),
+  normalizeInputText, lineAdd, linesStartingFrom, hasNumber, makeDrawerLines,
+  wrapLine, prefixLine, tlPrint, tlFormat, wrapStringVarLines
   ) where
 
 import Data.List (intercalate)
